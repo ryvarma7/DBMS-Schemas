@@ -1,0 +1,452 @@
+-- =========================================================
+-- EXPERIMENT 1: DDL COMMANDS
+-- =========================================================
+
+CREATE DATABASE VulnerabilityPatchDB;
+USE VulnerabilityPatchDB;
+
+CREATE TABLE Admin (
+admin_id INT AUTO_INCREMENT PRIMARY KEY,
+admin_name VARCHAR(50) NOT NULL,
+email VARCHAR(100) UNIQUE,
+role VARCHAR(30),
+contact_number VARCHAR(15)
+);
+
+CREATE TABLE Asset (
+asset_id INT AUTO_INCREMENT PRIMARY KEY,
+asset_name VARCHAR(50),
+asset_type VARCHAR(30),
+os_version VARCHAR(50),
+location VARCHAR(50),
+admin_id INT,
+FOREIGN KEY (admin_id) REFERENCES Admin(admin_id)
+);
+
+CREATE TABLE Vulnerability (
+vulnerability_id INT AUTO_INCREMENT PRIMARY KEY,
+cve_id VARCHAR(20) UNIQUE,
+severity VARCHAR(10),
+description VARCHAR(200),
+discovery_date DATE
+);
+
+CREATE TABLE Asset_Vulnerability_Map (
+map_id INT AUTO_INCREMENT PRIMARY KEY,
+asset_id INT,
+vulnerability_id INT,
+FOREIGN KEY (asset_id) REFERENCES Asset(asset_id),
+FOREIGN KEY (vulnerability_id) REFERENCES Vulnerability(vulnerability_id)
+);
+
+CREATE TABLE Patch (
+patch_id INT AUTO_INCREMENT PRIMARY KEY,
+patch_name VARCHAR(50),
+release_date DATE,
+vulnerability_id INT,
+FOREIGN KEY (vulnerability_id) REFERENCES Vulnerability(vulnerability_id)
+);
+
+CREATE TABLE Patch_Status_History (
+status_id INT AUTO_INCREMENT PRIMARY KEY,
+asset_id INT,
+patch_id INT,
+status VARCHAR(20),
+updated_date DATE,
+FOREIGN KEY (asset_id) REFERENCES Asset(asset_id),
+FOREIGN KEY (patch_id) REFERENCES Patch(patch_id)
+);
+
+CREATE TABLE Risk_Score (
+risk_id INT AUTO_INCREMENT PRIMARY KEY,
+asset_id INT,
+risk_level VARCHAR(10),
+calculated_date DATE,
+FOREIGN KEY (asset_id) REFERENCES Asset(asset_id)
+);
+
+CREATE TABLE Audit_Log (
+log_id INT AUTO_INCREMENT PRIMARY KEY,
+action VARCHAR(100),
+timestamp DATETIME,
+details VARCHAR(255),
+user_id INT,
+FOREIGN KEY (user_id) REFERENCES Admin(admin_id)
+);
+
+-- ALTER
+ALTER TABLE Asset ADD purchase_date DATE;
+ALTER TABLE Asset MODIFY asset_name VARCHAR(100);
+ALTER TABLE Asset DROP purchase_date;
+
+-- RENAME
+RENAME TABLE Asset TO Asset_New;
+RENAME TABLE Asset_New TO Asset;
+
+-- SHOW & DESC
+SHOW TABLES;
+DESC Asset;
+
+-- TRUNCATE
+TRUNCATE TABLE Audit_Log;
+
+-- DROP
+DROP TABLE Audit_Log;
+DROP DATABASE VulnerabilityPatchDB;
+
+
+-- =========================================================
+-- EXPERIMENT 1: DML COMMANDS
+-- =========================================================
+
+INSERT INTO Admin VALUES (1,'Ravi','ravi@srm.edu.in','Admin','9876543210');
+
+INSERT INTO Asset(asset_id,asset_name) VALUES (2,'Lab-PC-02');
+
+UPDATE Asset SET location='Lab A' WHERE asset_id=2;
+
+DELETE FROM Asset WHERE asset_id=2;
+
+
+-- =========================================================
+-- EXPERIMENT 2: DQL COMMANDS
+-- =========================================================
+
+SELECT * FROM Asset;
+
+SELECT asset_name, location FROM Asset;
+
+SELECT * FROM Asset WHERE location='Lab A';
+
+SELECT * FROM Asset WHERE asset_name LIKE 'Lab%';
+
+SELECT * FROM Asset ORDER BY asset_name;
+
+SELECT DISTINCT location FROM Asset;
+
+SELECT * FROM Asset LIMIT 5;
+
+SELECT location, COUNT(*) FROM Asset GROUP BY location;
+
+SELECT location, COUNT(*) FROM Asset GROUP BY location HAVING COUNT(*) > 1;
+
+-- Arithmetic
+SELECT asset_id + 10 AS new_id FROM Asset;
+SELECT asset_id - 1 FROM Asset;
+SELECT asset_id * 2 FROM Asset;
+SELECT asset_id / 2 FROM Asset;
+SELECT asset_id % 2 FROM Asset;
+
+-- Logical
+SELECT * FROM Asset WHERE location='Lab A' AND asset_type='Desktop';
+SELECT * FROM Asset WHERE location='Lab A' OR asset_type='Laptop';
+SELECT * FROM Asset WHERE NOT location='Lab A';
+
+-- Relational
+SELECT * FROM Asset WHERE asset_id = 1;
+SELECT * FROM Asset WHERE asset_id != 1;
+SELECT * FROM Asset WHERE asset_id > 1;
+SELECT * FROM Asset WHERE asset_id < 5;
+SELECT * FROM Asset WHERE asset_id >= 1;
+SELECT * FROM Asset WHERE asset_id <= 10;
+
+
+-- =========================================================
+-- EXPERIMENT 3a: TCL COMMANDS
+-- =========================================================
+
+START TRANSACTION;
+
+INSERT INTO Asset VALUES (10,'Test-PC','Desktop','Windows','Lab A',1);
+
+SAVEPOINT sp1;
+
+UPDATE Asset SET location='Lab B' WHERE asset_id=10;
+
+ROLLBACK TO sp1;
+
+COMMIT;
+
+ROLLBACK;
+
+
+-- =========================================================
+-- EXPERIMENT 3b: ER DIAGRAM (REFERENCE ONLY)
+-- =========================================================
+-- Entities:
+-- Asset, Vulnerability, Patch, Admin, Risk_Score, Audit_Log
+-- Relationships:
+-- Asset-Vulnerability (M:N)
+-- Vulnerability-Patch (1:M)
+-- Admin-Audit_Log (1:M)
+
+
+-- =========================================================
+-- EXPERIMENT 4a: RELATIONAL ALGEBRA (SQL EQUIVALENTS)
+-- =========================================================
+
+-- Selection
+SELECT * FROM Vulnerability WHERE severity='High';
+
+-- Projection
+SELECT DISTINCT asset_name, location FROM Asset;
+
+-- Rename
+SELECT * FROM Asset AS A;
+
+-- Union
+SELECT asset_id FROM Asset
+UNION
+SELECT asset_id FROM Risk_Score;
+
+-- Intersection
+SELECT asset_id FROM Asset
+WHERE asset_id IN (SELECT asset_id FROM Risk_Score);
+
+-- Difference
+SELECT asset_id FROM Asset
+WHERE asset_id NOT IN (SELECT asset_id FROM Risk_Score);
+
+-- Cartesian Product
+SELECT * FROM Asset, Vulnerability;
+
+-- Theta Join
+SELECT * FROM Asset A JOIN Asset_Vulnerability_Map AV
+ON A.asset_id = AV.asset_id;
+
+-- Natural Join (conceptual)
+SELECT * FROM Asset NATURAL JOIN Asset_Vulnerability_Map;
+
+-- Grouping
+SELECT location, COUNT(*) FROM Asset GROUP BY location;
+
+
+-- =========================================================
+-- EXPERIMENT 4a: TUPLE RELATIONAL CALCULUS (REFERENCE)
+-- =========================================================
+-- { t | Asset(t) AND t.location = 'Lab A' }
+-- { t | Vulnerability(t) AND t.severity = 'High' }
+-- { t | EXISTS v (Vulnerability(v) AND v.severity='Critical') }
+
+
+-- =========================================================
+-- EXPERIMENT 4b: AGGREGATE FUNCTIONS
+-- =========================================================
+
+SELECT COUNT(*) FROM Asset;
+SELECT SUM(asset_id) FROM Asset;
+SELECT AVG(asset_id) FROM Asset;
+SELECT MIN(asset_id) FROM Asset;
+SELECT MAX(asset_id) FROM Asset;
+SELECT VARIANCE(asset_id) FROM Asset;
+SELECT STDDEV(asset_id) FROM Asset;
+
+
+-- =========================================================
+-- CONSTRAINTS
+-- =========================================================
+
+CREATE TABLE Test (
+id INT PRIMARY KEY,
+name VARCHAR(20) NOT NULL,
+email VARCHAR(50) UNIQUE,
+marks INT CHECK(marks>=0),
+dept VARCHAR(10) DEFAULT 'CSE'
+);
+
+
+-- =========================================================
+-- SET OPERATIONS
+-- =========================================================
+
+SELECT asset_id FROM Asset
+UNION ALL
+SELECT asset_id FROM Risk_Score;
+
+SELECT asset_id FROM Asset
+WHERE asset_id IN (SELECT asset_id FROM Risk_Score);
+
+SELECT asset_id FROM Asset
+WHERE asset_id NOT IN (SELECT asset_id FROM Risk_Score);
+
+
+-- =========================================================
+-- EXPERIMENT 5: SUBQUERIES
+-- =========================================================
+
+SELECT * FROM Asset
+WHERE asset_id = (SELECT MIN(asset_id) FROM Asset);
+
+SELECT * FROM Asset
+WHERE asset_id > (SELECT AVG(asset_id) FROM Asset);
+
+SELECT * FROM Asset
+WHERE asset_id IN (SELECT asset_id FROM Risk_Score);
+
+SELECT * FROM Asset
+WHERE asset_id NOT IN (SELECT asset_id FROM Risk_Score);
+
+SELECT * FROM Asset
+WHERE asset_id > ANY (SELECT asset_id FROM Risk_Score);
+
+SELECT * FROM Asset
+WHERE asset_id > ALL (SELECT asset_id FROM Risk_Score);
+
+SELECT * FROM Asset A
+WHERE EXISTS (
+    SELECT * FROM Risk_Score R WHERE R.asset_id = A.asset_id
+);
+
+SELECT * FROM Asset A
+WHERE NOT EXISTS (
+    SELECT * FROM Risk_Score R WHERE R.asset_id = A.asset_id
+);
+
+
+-- =========================================================
+-- JOINS
+-- =========================================================
+
+SELECT A.asset_name, V.cve_id
+FROM Asset A
+INNER JOIN Asset_Vulnerability_Map AV ON A.asset_id = AV.asset_id
+INNER JOIN Vulnerability V ON AV.vulnerability_id = V.vulnerability_id;
+
+SELECT A.asset_name, R.risk_level
+FROM Asset A
+LEFT JOIN Risk_Score R ON A.asset_id = R.asset_id;
+
+SELECT A.asset_name, R.risk_level
+FROM Asset A
+RIGHT JOIN Risk_Score R ON A.asset_id = R.asset_id;
+
+SELECT * FROM Asset CROSS JOIN Vulnerability;
+
+SELECT A.asset_name, B.asset_name
+FROM Asset A, Asset B
+WHERE A.location = B.location AND A.asset_id <> B.asset_id;
+
+
+-- =========================================================
+-- VIEWS
+-- =========================================================
+
+CREATE VIEW Asset_View AS
+SELECT asset_name, location FROM Asset;
+
+SELECT * FROM Asset_View;
+
+UPDATE Asset_View SET asset_name='Updated-PC' WHERE location='Lab A';
+
+DROP VIEW Asset_View;
+
+
+-- =========================================================
+-- EXPERIMENT 6: PROCEDURES
+-- =========================================================
+
+DELIMITER $$
+
+CREATE PROCEDURE get_assets()
+BEGIN
+   SELECT * FROM Asset;
+END$$
+
+DELIMITER ;
+
+CALL get_assets();
+
+
+-- =========================================================
+-- FUNCTIONS
+-- =========================================================
+
+DELIMITER $$
+
+CREATE FUNCTION square_num(n INT)
+RETURNS INT
+DETERMINISTIC
+BEGIN
+   RETURN n*n;
+END$$
+
+DELIMITER ;
+
+SELECT square_num(5);
+
+
+-- =========================================================
+-- CURSOR
+-- =========================================================
+
+DELIMITER $$
+
+CREATE PROCEDURE show_asset_names()
+BEGIN
+   DECLARE done INT DEFAULT 0;
+   DECLARE a_name VARCHAR(50);
+
+   DECLARE cur CURSOR FOR SELECT asset_name FROM Asset;
+   DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+   OPEN cur;
+
+   read_loop: LOOP
+      FETCH cur INTO a_name;
+      IF done = 1 THEN
+         LEAVE read_loop;
+      END IF;
+      SELECT a_name;
+   END LOOP;
+
+   CLOSE cur;
+END$$
+
+DELIMITER ;
+
+CALL show_asset_names();
+
+
+-- =========================================================
+-- TRIGGER
+-- =========================================================
+
+DELIMITER $$
+
+CREATE TRIGGER before_insert_asset
+BEFORE INSERT ON Asset
+FOR EACH ROW
+BEGIN
+   IF NEW.asset_name IS NULL THEN
+      SET NEW.asset_name = 'Unknown';
+   END IF;
+END$$
+
+DELIMITER ;
+
+
+-- =========================================================
+-- EXCEPTION HANDLING
+-- =========================================================
+
+DELIMITER $$
+
+CREATE PROCEDURE insert_admin_safe(
+   IN p_id INT,
+   IN p_name VARCHAR(50)
+)
+BEGIN
+   DECLARE EXIT HANDLER FOR SQLEXCEPTION
+   BEGIN
+      SELECT 'Error occurred';
+   END;
+
+   INSERT INTO Admin(admin_id, admin_name)
+   VALUES (p_id, p_name);
+
+   SELECT 'Inserted Successfully';
+END$$
+
+DELIMITER ;
+
+CALL insert_admin_safe(1,'Test');
