@@ -111,14 +111,12 @@ user_id INT,
 FOREIGN KEY (user_id) REFERENCES Admin(admin_id)
 ON DELETE SET NULL
 );
-
 -- =========================
 -- INDEXES (IMPORTANT FOR PERFORMANCE)
 -- =========================
 CREATE INDEX idx_asset ON Asset(asset_name);
 CREATE INDEX idx_cve ON Vulnerability(cve_id);
 CREATE INDEX idx_patch_status ON Patch_Status_History(status);
-
 -- =========================
 -- SAMPLE VIEW (FOR COMPLEX QUERIES)
 -- =========================
