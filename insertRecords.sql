@@ -4,7 +4,6 @@ INSERT INTO Admin (admin_name, email, role, contact_number) VALUES
 ('Karan Mehta', 'karan@srm.edu.in', 'Super Admin', '9988776655'),
 ('Sneha Iyer', 'sneha@srm.edu.in', 'Security Admin', '9090909090'),
 ('Arjun Patel', 'arjun@srm.edu.in', 'Lab Admin', '9012345678');
-
 INSERT INTO Asset (asset_name, asset_type, os_version, location, purchase_date, admin_id) VALUES
 ('Lab-PC-01', 'Desktop', 'Windows 10', 'Lab A', '2022-01-10', 1),
 ('Lab-PC-02', 'Desktop', 'Windows 11', 'Lab A', '2022-03-15', 2),
